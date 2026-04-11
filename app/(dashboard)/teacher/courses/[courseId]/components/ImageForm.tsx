@@ -2,12 +2,12 @@
 import * as z from 'zod'
 
 import { ImageIcon, Pencil, PlusCircle } from 'lucide-react'
+import { toast } from 'sonner'
 import { useState } from 'react'
 import Image from 'next/image'
-import axios from 'axios'
-import { toast } from 'sonner'
 
 import { Course } from '@/lib/generated/prisma/client'
+import { updateCourse } from '@/lib/actions/course'
 
 import { Button } from '@/components/ui/button'
 import { FileUpload } from '@/components/file-upload'
@@ -20,6 +20,7 @@ interface ImageFormProps {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const formSchema = z.object({
   imageUrl: z.string().min(1, { message: 'Course image is required' }),
+  courseId: z.string(),
 })
 
 // * COMPONENT FOR COURSE TITLE FORM
@@ -31,15 +32,10 @@ export function ImageForm({ initialData, courseId }: ImageFormProps) {
   // HANDLERS
   const onToggleEdit = () => setIsEditing((isEditing) => !isEditing)
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    console.log(values)
-    // try {
-    //   await axios.patch(`/api/courses/${courseId}`, values)
-    //   toast.success('Course image updated')
-    //   onToggleEdit()
-    // } catch (error) {
-    //   console.log(error)
-    //   toast.error('Something went wrong. Please try again.')
-    // }
+    await updateCourse(null, values)
+
+    toast.success('Course image updated')
+    onToggleEdit()
   }
 
   return (
@@ -79,7 +75,7 @@ export function ImageForm({ initialData, courseId }: ImageFormProps) {
             endpoint='courseImageUploader'
             onChange={(url) => {
               if (url) {
-                onSubmit({ imageUrl: url })
+                onSubmit({ imageUrl: url, courseId })
               }
             }}
           />

@@ -15,7 +15,7 @@ export const FileUpload = ({ onChange, endpoint }: FileUploadProps) => {
     <UploadDropzone
       endpoint={endpoint}
       onClientUploadComplete={(res) => {
-        //   URL from uploadthing response to save in database
+        //   URL from uploadthing response to save in database.
         onChange(res?.[0].ufsUrl)
       }}
       onUploadError={(error: Error) => {

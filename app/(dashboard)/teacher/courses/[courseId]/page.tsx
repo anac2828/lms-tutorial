@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { TitleForm } from './components/TitleForm'
 import { DescriptionForm } from './components/DescriptionForm'
 import { ImageForm } from './components/ImageForm'
+import { CategoryForm } from './components/CategoryForm'
 
 async function coursePage({ params }: { params: { courseId: string } }) {
   // 1. Get course id from params
@@ -39,6 +40,10 @@ async function coursePage({ params }: { params: { courseId: string } }) {
   const completedFields = requiredFields.filter(Boolean).length
   const completionText = `(${completedFields}/${totalNumFields})`
 
+  const categories = await prisma.category.findMany({
+    orderBy: { name: 'asc' },
+  })
+
   return (
     <div className='p-6'>
       <div className='flex items-center justify-between'>
@@ -56,6 +61,14 @@ async function coursePage({ params }: { params: { courseId: string } }) {
           <TitleForm initialData={course} courseId={course.id} />
           <DescriptionForm initialData={course} courseId={course.id} />
           <ImageForm initialData={course} courseId={course.id} />
+          <CategoryForm
+            initialData={course}
+            courseId={course.id}
+            options={categories.map((category) => ({
+              label: category.name,
+              value: category.id,
+            }))}
+          />
         </div>
       </div>
     </div>

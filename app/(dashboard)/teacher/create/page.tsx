@@ -34,7 +34,7 @@ const formSchema = z.object({
 function CrateCoursePage() {
   // formAction is the function that will be called when the form is submitted, it is returned by the useActionState hook (createCouase)
   // state is the state returned by the action (createCourse) and is used to show success or error messages
-  const [state, formAction, isPending] = useActionState(createCourse, undefined)
+  const [state, formAction, isPending] = useActionState(createCourse, null)
   // react hook form
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -55,18 +55,6 @@ function CrateCoursePage() {
     }
   }, [state, router])
 
-  // HANDLER - OLD WAY - API ROUTE
-  //   values is the form data that we will submit to the server
-  // const onSubmitForm = async (values: z.infer<typeof formSchema>) => {
-  //   try {
-  //     const reseponse = await axios.post('/api/courses', values)
-
-  //     router.push(`/teacher/courses/${reseponse.data.id}`)
-  //   } catch (error) {
-  //     console.log(error)
-  //     toast.error('Something went wrong, please try again.')
-  //   }
-  // }
   return (
     <div className='flex h-full max-w-5xl p-6 mx-auto md:items-center md:justify-center'>
       <Card className='w-full sm:max-w-md'>
