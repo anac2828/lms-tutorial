@@ -20,7 +20,6 @@ interface ImageFormProps {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const formSchema = z.object({
   imageUrl: z.string().min(1, { message: 'Course image is required' }),
-  courseId: z.string(),
 })
 
 // * COMPONENT FOR COURSE TITLE FORM
@@ -31,11 +30,16 @@ export function ImageForm({ initialData, courseId }: ImageFormProps) {
 
   // HANDLERS
   const onToggleEdit = () => setIsEditing((isEditing) => !isEditing)
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    await updateCourse(null, values)
+  const onSubmit = async (formData: z.infer<typeof formSchema>) => {
+    const response = await updateCourse(formData, courseId)
 
-    toast.success('Course image updated')
-    onToggleEdit()
+    if (response?.success) {
+      toast.success('Course image updated.')
+      onToggleEdit()
+    }
+    if (response?.error) {
+      toast.error('Something went wrong, please try again.')
+    }
   }
 
   return (
@@ -75,7 +79,7 @@ export function ImageForm({ initialData, courseId }: ImageFormProps) {
             endpoint='courseImageUploader'
             onChange={(url) => {
               if (url) {
-                onSubmit({ imageUrl: url, courseId })
+                onSubmit({ imageUrl: url })
               }
             }}
           />

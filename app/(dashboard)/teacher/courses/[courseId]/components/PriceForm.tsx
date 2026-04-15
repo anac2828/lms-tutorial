@@ -2,34 +2,35 @@
 import * as z from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, Controller } from 'react-hook-form'
-import { Field, FieldError, FieldGroup } from '@/components/ui/field'
-
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Pencil } from 'lucide-react'
 import { useState } from 'react'
-import { updateCourse } from '@/lib/actions/course'
+import { Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 
-interface TitleFormProps {
-  initialData: {
-    title: string
-  }
+import { cn } from '@/lib/utils'
+import { Course } from '@/lib/generated/prisma/client'
+import { updateCourse } from '@/lib/actions/course'
+import { Field, FieldError, FieldGroup } from '@/components/ui/field'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+
+interface PriceFormProps {
+  initialData: Course
+
   courseId: string
 }
 
 const formSchema = z.object({
-  title: z.string().min(1, { message: 'Course title is required' }),
+  price: z.coerce.number<number>().min(0, 'Price must be 0 or greater'),
 })
 
 // * COMPONENT FOR COURSE TITLE FORM
-export function TitleForm({ initialData, courseId }: TitleFormProps) {
+export function PriceForm({ initialData, courseId }: PriceFormProps) {
   const [isEditing, setIsEditing] = useState(false)
-
-  // FORM SETUP
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData,
+    defaultValues: {
+      price: initialData?.price ? Number(initialData.price) : 0,
+    },
   })
 
   // HANDLERS
@@ -38,7 +39,7 @@ export function TitleForm({ initialData, courseId }: TitleFormProps) {
     const response = await updateCourse(formData, courseId)
 
     if (response?.success) {
-      toast.success('Course title updated.')
+      toast.success('Course description updated.')
       onToggleEdit()
     }
     if (response?.error) {
@@ -46,25 +47,35 @@ export function TitleForm({ initialData, courseId }: TitleFormProps) {
     }
   }
 
+  const displayPrice = initialData.price
+    ? `$${Number(initialData.price).toFixed(2)}`
+    : 'No price set'
   // FORM STATE
   const { isValid, errors, isSubmitting } = form.formState
 
   return (
     <div className='p-4 mt-6 border rounded-md bg-slate-100'>
       <div className='flex items-center justify-between font-medium'>
-        Course Title
+        Course Price
         <Button onClick={onToggleEdit} variant='ghost'>
           {isEditing ? (
             'Cancel'
           ) : (
             <>
-              <Pencil className='w-4 h-4 mr-2' /> Edit title
+              <Pencil className='w-4 h-4 mr-2' /> Edit price
             </>
           )}
         </Button>
       </div>
       {!isEditing ? (
-        <p className='mt-2 text-sm'>{initialData.title}</p>
+        <p
+          className={cn(
+            'mt-2 text-sm',
+            !initialData.price && 'text-slate-500 italic',
+          )}
+        >
+          {displayPrice}
+        </p>
       ) : (
         <form
           onSubmit={form.handleSubmit(onSubmitForm)}
@@ -73,17 +84,18 @@ export function TitleForm({ initialData, courseId }: TitleFormProps) {
           <FieldGroup>
             <Controller
               control={form.control}
-              name='title'
+              name='price'
               render={({ field }) => (
                 <Field>
                   <Input
+                    type='number'
+                    step='0.001'
                     disabled={isSubmitting}
-                    placeholder="e.g. 'Advanced web development'"
+                    placeholder='Set a price for your course'
                     {...field}
-                    className='bg-zinc-50'
                   />
-                  {errors.title && (
-                    <FieldError errors={[{ message: errors.title.message }]} />
+                  {errors.price && (
+                    <FieldError errors={[{ message: errors.price.message }]} />
                   )}
                 </Field>
               )}

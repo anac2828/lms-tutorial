@@ -2,16 +2,16 @@
 import * as z from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, Controller } from 'react-hook-form'
-import { useActionState, useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { cn } from '@/lib/utils'
 import { Course } from '@/lib/generated/prisma/client'
 import { Field, FieldError, FieldGroup } from '@/components/ui/field'
-import { Textarea } from '@/components/ui/textarea'
+
 import { Button } from '@/components/ui/button'
-import { ComboboxBasic } from '@/components/categoriesComboBox'
+import { Combobox } from '@/components/categoriesComboBox'
 import { updateCourse } from '@/lib/actions/course'
 
 interface CategoryFormProps {
@@ -22,7 +22,7 @@ interface CategoryFormProps {
 }
 
 const formSchema = z.object({
-  categoryId: z.string().min(1),
+  categoryId: z.string().min(1, { message: 'Please select a category.' }),
 })
 
 // * COMPONENT FOR COURSE TITLE FORM
@@ -31,34 +31,28 @@ export function CategoryForm({
   courseId,
   options,
 }: CategoryFormProps) {
-  const [state, formAction] = useActionState(updateCourse, null)
   const [isEditing, setIsEditing] = useState(false)
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      categoryId: initialData.categoryId || '',
+      categoryId: initialData?.categoryId || '',
     },
   })
 
   // HANDLERS
-  const onToggleEdit = useCallback(() => {
-    setIsEditing((isEditing) => !isEditing)
-    // Restores form values to initial data when input is left empty and user toggles out of edit mode
-    form.reset({
-      categoryId: initialData.description || '',
-    })
-  }, [form, initialData])
+  const onToggleEdit = () => setIsEditing((isEditing) => !isEditing)
 
-  useEffect(() => {
-    if (state?.success) {
-      toast.success('Course description updated successfully')
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsEditing(false)
+  const onSubmitForm = async (formData: z.infer<typeof formSchema>) => {
+    const response = await updateCourse(formData, courseId)
+
+    if (response?.success) {
+      toast.success('Course category updated.')
+      onToggleEdit()
     }
-    if (state?.error) {
-      toast.error(state.error)
+    if (response?.error) {
+      toast.error('Something went wrong, please try again.')
     }
-  }, [state, setIsEditing])
+  }
 
   // FORM STATE
   const { isValid, errors, isSubmitting } = form.formState
@@ -92,26 +86,30 @@ export function CategoryForm({
           {selectedOption?.label || 'No category'}
         </p>
       ) : (
-        <form action={formAction} className='mt-4 space-y-4'>
-          <input type='hidden' name='courseId' value={courseId} />
+        <form
+          onSubmit={form.handleSubmit(onSubmitForm)}
+          className='mt-4 space-y-4'
+        >
           <FieldGroup>
             <Controller
               control={form.control}
               name='categoryId'
-              render={({ field }) => (
-                <Field>
-                  <ComboboxBasic options={options} {...field} />
-                  {errors.categoryId && (
-                    <FieldError
-                      errors={[{ message: errors.categoryId.message }]}
-                    />
-                  )}
-                </Field>
-              )}
+              render={({ field }) => {
+                return (
+                  <Field>
+                    <Combobox options={options} {...field} />
+                    {errors.categoryId && (
+                      <FieldError
+                        errors={[{ message: errors.categoryId.message }]}
+                      />
+                    )}
+                  </Field>
+                )
+              }}
             />
           </FieldGroup>
           <div className='flex items-center gap-x-2'>
-            <Button disabled={isSubmitting} type='submit'>
+            <Button disabled={!isValid || isSubmitting} type='submit'>
               Save
             </Button>
           </div>

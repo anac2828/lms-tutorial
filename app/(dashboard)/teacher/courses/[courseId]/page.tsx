@@ -1,11 +1,12 @@
-import { IconBadge } from '@/components/icon-badge'
-import { prisma } from '@/lib/db'
-import { LayoutDashboard } from 'lucide-react'
+import { CircleDollarSign, LayoutDashboard, ListChecks } from 'lucide-react'
 import { redirect } from 'next/navigation'
+import { prisma } from '@/lib/db'
+import { IconBadge } from '@/components/icon-badge'
 import { TitleForm } from './components/TitleForm'
 import { DescriptionForm } from './components/DescriptionForm'
 import { ImageForm } from './components/ImageForm'
 import { CategoryForm } from './components/CategoryForm'
+import { PriceForm } from './components/PriceForm'
 
 async function coursePage({ params }: { params: { courseId: string } }) {
   // 1. Get course id from params
@@ -69,6 +70,22 @@ async function coursePage({ params }: { params: { courseId: string } }) {
               value: category.id,
             }))}
           />
+        </div>
+        <div className='space-y-6'>
+          <div>
+            <div className='flex items-center gap-x-2'>
+              <IconBadge icon={ListChecks} />
+              <h2 className='text-xl'>Course chapters</h2>
+            </div>
+            <div>TODO: Chapter</div>
+          </div>
+          <div>
+            <div className='flex items-center gap-x-2'>
+              <IconBadge icon={CircleDollarSign} />
+              <h2 className='text-xl'>Sell your course</h2>
+            </div>
+            <PriceForm initialData={course} courseId={course.id} />
+          </div>
         </div>
       </div>
     </div>

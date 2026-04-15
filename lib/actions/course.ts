@@ -3,6 +3,7 @@ import * as z from 'zod'
 import { prisma } from '../db'
 import { auth } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
+import { Values } from 'zod/v3'
 
 //* HELPERS
 async function getUserId() {
@@ -14,6 +15,7 @@ async function getUserId() {
 }
 
 // SCHEMA FOR VALIDATING COURSE DATA
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const formSchema = z.object({
   title: z.string().min(1, { message: 'Course title is required' }).optional(),
   description: z
@@ -22,6 +24,8 @@ const formSchema = z.object({
     .optional(),
   imageUrl: z.string().optional(),
   courseId: z.string().optional(),
+  categoryId: z.string().optional(),
+  price: z.coerce.number().optional(),
 })
 
 const createCourseformSchema = z.object({
@@ -73,23 +77,10 @@ export async function createCourse(
 
 // ******* ACTION FUNCTION TO UPDATE A COURSE *******
 export async function updateCourse(
-  prevState: ActionState,
-  values: FormData | z.infer<typeof formSchema>,
+  values: z.infer<typeof formSchema>,
+  courseId: string,
 ): Promise<ActionState> {
   try {
-    let data: z.infer<typeof formSchema>
-    let courseId
-
-    if (values instanceof FormData) {
-      const title = values.get('title') as string
-      const description = values.get('description') as string
-      courseId = values.get('courseId') as string
-      data = title ? { title } : { description }
-    } else {
-      courseId = values.courseId
-      data = { imageUrl: values.imageUrl }
-    }
-
     // 2 Check if user is signed in
     const userId = await getUserId()
 
@@ -102,8 +93,8 @@ export async function updateCourse(
 
     // 3 Update course
     const course = await prisma.course.update({
-      where: { id: courseId, userId },
-      data: data,
+      where: { id: courseId },
+      data: values,
     })
 
     revalidatePath(`/teacher/courses/${course.id}`)

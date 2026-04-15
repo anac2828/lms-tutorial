@@ -2,7 +2,7 @@
 import * as z from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, Controller } from 'react-hook-form'
-import { useActionState, useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -28,7 +28,6 @@ export function DescriptionForm({
   initialData,
   courseId,
 }: DescriptionFormProps) {
-  const [state, formAction] = useActionState(updateCourse, null)
   const [isEditing, setIsEditing] = useState(false)
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -38,24 +37,18 @@ export function DescriptionForm({
   })
 
   // HANDLERS
-  const onToggleEdit = useCallback(() => {
-    setIsEditing((isEditing) => !isEditing)
-    // Restores form values to initial data when input is left empty and user toggles out of edit mode
-    form.reset({
-      description: initialData.description || '',
-    })
-  }, [form, initialData])
+  const onToggleEdit = () => setIsEditing((isEditing) => !isEditing)
+  const onSubmitForm = async (formData: z.infer<typeof formSchema>) => {
+    const response = await updateCourse(formData, courseId)
 
-  useEffect(() => {
-    if (state?.success) {
-      toast.success('Course description updated successfully')
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsEditing(false)
+    if (response?.success) {
+      toast.success('Course description updated.')
+      onToggleEdit()
     }
-    if (state?.error) {
-      toast.error(state.error)
+    if (response?.error) {
+      toast.error('Something went wrong, please try again.')
     }
-  }, [state, setIsEditing])
+  }
 
   // FORM STATE
   const { isValid, errors, isSubmitting } = form.formState
@@ -84,8 +77,10 @@ export function DescriptionForm({
           {initialData.description || 'No description'}
         </p>
       ) : (
-        <form action={formAction} className='mt-4 space-y-4'>
-          <input type='hidden' name='courseId' value={courseId} />
+        <form
+          onSubmit={form.handleSubmit(onSubmitForm)}
+          className='mt-4 space-y-4'
+        >
           <FieldGroup>
             <Controller
               control={form.control}
