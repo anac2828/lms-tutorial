@@ -1,4 +1,9 @@
-import { CircleDollarSign, LayoutDashboard, ListChecks } from 'lucide-react'
+import {
+  CircleDollarSign,
+  File,
+  LayoutDashboard,
+  ListChecks,
+} from 'lucide-react'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/db'
 import { IconBadge } from '@/components/icon-badge'
@@ -7,6 +12,7 @@ import { DescriptionForm } from './components/DescriptionForm'
 import { ImageForm } from './components/ImageForm'
 import { CategoryForm } from './components/CategoryForm'
 import { PriceForm } from './components/PriceForm'
+import { AttachmentForm } from './components/AttachmentForm'
 
 async function coursePage({ params }: { params: { courseId: string } }) {
   // 1. Get course id from params
@@ -20,6 +26,11 @@ async function coursePage({ params }: { params: { courseId: string } }) {
   const course = await prisma.course.findUnique({
     where: {
       id: courseId,
+    },
+    include: {
+      attachments: {
+        orderBy: { createdAt: 'desc' },
+      },
     },
   })
 
@@ -47,18 +58,23 @@ async function coursePage({ params }: { params: { courseId: string } }) {
 
   return (
     <div className='p-6'>
+      {/* HEADER  */}
       <div className='flex items-center justify-between'>
         <div className='flex flex-col gap-y-2'>
           <h1 className='text-2xl font-medium'>Course setup</h1>
           <span>Complete all fields {completionText}</span>
         </div>
       </div>
+      {/* COURSE DETAILS */}
       <div className='grid grid-cols-1 gap-6 mt-16 md:grid-cols-2'>
+        {/* LEFT COLUMN */}
         <div>
+          {/* Header */}
           <div className='flex items-center gap-x-2'>
             <IconBadge icon={LayoutDashboard} />
             <h2 className='text-xl'>Customize your course</h2>
           </div>
+          {/* FORMS */}
           <TitleForm initialData={course} courseId={course.id} />
           <DescriptionForm initialData={course} courseId={course.id} />
           <ImageForm initialData={course} courseId={course.id} />
@@ -71,7 +87,9 @@ async function coursePage({ params }: { params: { courseId: string } }) {
             }))}
           />
         </div>
+        {/* RIGHT COLUMN */}
         <div className='space-y-6'>
+          {/* CHAPTERS */}
           <div>
             <div className='flex items-center gap-x-2'>
               <IconBadge icon={ListChecks} />
@@ -79,12 +97,21 @@ async function coursePage({ params }: { params: { courseId: string } }) {
             </div>
             <div>TODO: Chapter</div>
           </div>
+          {/* PRICE */}
           <div>
             <div className='flex items-center gap-x-2'>
               <IconBadge icon={CircleDollarSign} />
               <h2 className='text-xl'>Sell your course</h2>
             </div>
             <PriceForm initialData={course} courseId={course.id} />
+          </div>
+          {/* RESOURCES */}
+          <div>
+            <div className='flex items-center gap-x-2'>
+              <IconBadge icon={File} />
+              <h2 className='text-xl'>Resources & Attachments</h2>
+            </div>
+            <AttachmentForm initialData={course} courseId={course.id} />
           </div>
         </div>
       </div>

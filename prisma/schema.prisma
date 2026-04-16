@@ -13,13 +13,13 @@ datasource db {
 }
 
 model Course {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   userId      String
-  title       String   @db.VarChar(255)
-  description String?  @db.Text
-  imageUrl    String?  @db.Text
-  price       Decimal?
-  isPublished Boolean  @default(false)
+  title       String  @db.VarChar(255)
+  description String? @db.Text
+  imageUrl    String? @db.Text
+  price       Float?
+  isPublished Boolean @default(false)
 
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id])
