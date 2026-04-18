@@ -43,14 +43,21 @@ export function CategoryForm({
   const onToggleEdit = () => setIsEditing((isEditing) => !isEditing)
 
   const onSubmitForm = async (formData: z.infer<typeof formSchema>) => {
-    const response = await updateCourse(formData, courseId)
+    try {
+      const response = await updateCourse(formData, courseId)
 
-    if (response?.success) {
-      toast.success('Course category updated.')
-      onToggleEdit()
-    }
-    if (response?.error) {
-      toast.error('Something went wrong, please try again.')
+      if (response?.success) {
+        toast.success('Course category updated.')
+        onToggleEdit()
+      } else {
+        toast.error(
+          response?.error || 'Something went wrong, please try again.',
+        )
+      }
+    } catch (error) {
+      // Other error from the try block
+      console.error('UPDATE FORM SUBMIT ERROR', error)
+      toast.error('Something went wrong. Please try again.')
     }
   }
 

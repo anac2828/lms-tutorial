@@ -3,7 +3,7 @@
 import * as z from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
-import { useActionState, useEffect } from 'react'
+
 import Link from 'next/link'
 import { toast } from 'sonner'
 import {
@@ -31,29 +31,34 @@ const formSchema = z.object({
 })
 
 // ** COMPONENT
-function CrateCoursePage() {
-  // formAction is the function that will be called when the form is submitted, it is returned by the useActionState hook (createCouase)
-  // state is the state returned by the action (createCourse) and is used to show success or error messages
-  const [state, formAction, isPending] = useActionState(createCourse, null)
+function CreateCoursePage() {
   // react hook form
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { title: '' },
   })
-  const { isValid, errors } = form.formState
+
   const router = useRouter()
+  const { isValid, errors, isSubmitting } = form.formState
 
-  // SIDE EFFECT to show toast notification on success or error
-  useEffect(() => {
-    if (state?.success) {
-      toast.success('Course created')
-      router.push(`/teacher/courses/${state.courseId}`)
-    }
+  // HANDLER
+  const onSubmitForm = async (formData: z.infer<typeof formSchema>) => {
+    try {
+      const response = await createCourse(formData)
 
-    if (state?.error) {
-      toast.error('Something went wrong, please try again.')
+      if (response?.success) {
+        toast.success('Course created successfully!')
+        router.push(`/teacher/courses/${response.courseId}`)
+      } else {
+        // Error from action function
+        toast.error(response?.error || 'Something went wrong.')
+      }
+    } catch (error) {
+      // Other error from the try block
+      console.error('CREATE FORM SUBMIT ERROR', error)
+      toast.error('Something went wrong. Please try again.')
     }
-  }, [state, router])
+  }
 
   return (
     <div className='flex h-full max-w-5xl p-6 mx-auto md:items-center md:justify-center'>
@@ -72,8 +77,7 @@ function CrateCoursePage() {
         {/* FORM */}
         <CardContent>
           <form
-            // onSubmit={form.handleSubmit(onSubmitForm)}
-            action={formAction}
+            onSubmit={form.handleSubmit(onSubmitForm)}
             className='mt-8 space-y-8'
           >
             <FieldGroup>
@@ -84,7 +88,7 @@ function CrateCoursePage() {
                   <Field>
                     <FieldLabel>Course Title</FieldLabel>
                     <Input
-                      disabled={isPending}
+                      disabled={isSubmitting}
                       placeholder='e.g. "Advanced web developement'
                       {...field}
                     />
@@ -108,7 +112,7 @@ function CrateCoursePage() {
                   Cancel
                 </Button>
               </Link>
-              <Button type='submit' disabled={!isValid || isPending}>
+              <Button type='submit' disabled={!isValid || isSubmitting}>
                 Continue
               </Button>
             </div>
@@ -119,4 +123,4 @@ function CrateCoursePage() {
   )
 }
 
-export default CrateCoursePage
+export default CreateCoursePage

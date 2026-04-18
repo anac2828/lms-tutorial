@@ -12,21 +12,21 @@ type ActionState = {
   success?: boolean
   error?: string
   courseId?: string
-  attachment?: object
+  chapter?: object
 } | null
 
 // Data schema
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const attachmentFormSchema = z.object({ url: z.string() })
+const attachmentFormSchema = z.object({ title: z.string() })
 
-// ** CREATER ATTACHMENT *****
+// ** CREATE CHAPTER *****
 export async function createAttachment(
   values: z.infer<typeof attachmentFormSchema>,
   courseId: string,
 ): Promise<ActionState> {
   try {
-    const { url } = values
-    const name = url.split('/').pop() || ''
+    const { title } = values
+
     // 1 Check if user is signed in
     const userId = await getUserId()
 
@@ -38,14 +38,23 @@ export async function createAttachment(
     // ERROR HANDLER
     if (!courseOwner) throw new Error('UNAUTHORIZED')
 
-    // 3 Update course
-    const attachment = await prisma.attachment.create({
-      data: { url, name, courseId },
+    // 3 Get last chapter uploaded
+    const lastChapter = await prisma.chapter.findFirst({
+      where: { courseId },
+      orderBy: { position: 'desc' },
+    })
+
+    console.log(lastChapter)
+    const newPosition = lastChapter ? lastChapter.position + 1 : 1
+
+    // 4 Create chapter
+    const chapter = await prisma.chapter.create({
+      data: { title, courseId, position: newPosition },
     })
 
     revalidatePath(`/teacher/courses/${courseId}`)
 
-    return { success: true, attachment }
+    return { success: true, chapter }
   } catch (error) {
     console.error('UPLOAD_ATTACHMENT_ACTION', error)
     return handleActionError(error, 'Failed to updated course.')

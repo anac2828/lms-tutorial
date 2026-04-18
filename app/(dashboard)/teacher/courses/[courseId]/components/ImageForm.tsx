@@ -31,14 +31,19 @@ export function ImageForm({ initialData, courseId }: ImageFormProps) {
   // HANDLERS
   const onToggleEdit = () => setIsEditing((isEditing) => !isEditing)
   const onSubmit = async (formData: z.infer<typeof formSchema>) => {
-    const response = await updateCourse(formData, courseId)
-
-    if (response?.success) {
-      toast.success('Course image updated.')
-      onToggleEdit()
-    }
-    if (response?.error) {
-      toast.error('Something went wrong, please try again.')
+    try {
+      const response = await updateCourse(formData, courseId)
+      if (response?.success) {
+        toast.success('Course image updated.')
+        onToggleEdit()
+      }
+      if (response?.error) {
+        toast.error('Something went wrong, please try again.')
+      }
+    } catch (error) {
+      // Other error from the try block
+      console.error('UPDATE FORM SUBMIT ERROR', error)
+      toast.error('Something went wrong. Please try again.')
     }
   }
 

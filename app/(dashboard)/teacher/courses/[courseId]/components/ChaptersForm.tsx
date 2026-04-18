@@ -3,48 +3,48 @@ import * as z from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, Controller } from 'react-hook-form'
 import { useState } from 'react'
-import { Pencil } from 'lucide-react'
+import { PlusCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { cn } from '@/lib/utils'
-import { Course } from '@/lib/generated/prisma/client'
+import { Course, Chapter } from '@/lib/generated/prisma/client'
+
 import { Field, FieldError, FieldGroup } from '@/components/ui/field'
-import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { updateCourse } from '@/lib/actions/course'
+import { Input } from '@/components/ui/input'
 
-interface DescriptionFormProps {
-  initialData: Course
+interface ChaptersFormProps {
+  initialData: Course & { chapters: Chapter[] }
 
   courseId: string
 }
 
 const formSchema = z.object({
-  description: z.string().min(1, { message: 'Course description is required' }),
+  title: z.string().min(1, { message: 'Chapter title is required' }),
 })
 
 // * COMPONENT FOR COURSE TITLE FORM
-export function DescriptionForm({
-  initialData,
-  courseId,
-}: DescriptionFormProps) {
-  const [isEditing, setIsEditing] = useState(false)
+export function ChaptersForm({ initialData, courseId }: ChaptersFormProps) {
+  const [isCreating, setIsCreating] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      description: initialData?.description || '',
+      title: '',
     },
   })
 
   // HANDLERS
-  const onToggleEdit = () => setIsEditing((isEditing) => !isEditing)
+  const toggleCreating = () => setIsCreating((isCreating) => !isCreating)
   const onSubmitForm = async (formData: z.infer<typeof formSchema>) => {
     try {
       const response = await updateCourse(formData, courseId)
 
       if (response?.success) {
-        toast.success('Course description updated.')
-        onToggleEdit()
+        toast.success('Chapter created')
+        toggleCreating()
       } else {
         toast.error(
           response?.error || 'Something went wrong, please try again.',
@@ -63,27 +63,18 @@ export function DescriptionForm({
   return (
     <div className='p-4 mt-6 border rounded-md bg-slate-100'>
       <div className='flex items-center justify-between font-medium'>
-        Course Description
-        <Button onClick={onToggleEdit} variant='ghost'>
-          {isEditing ? (
+        Course chapters
+        <Button onClick={toggleCreating} variant='ghost'>
+          {isCreating ? (
             'Cancel'
           ) : (
             <>
-              <Pencil className='w-4 h-4 mr-2' /> Edit description
+              <PlusCircle className='w-4 h-4 mr-2' /> Add a chapter
             </>
           )}
         </Button>
       </div>
-      {!isEditing ? (
-        <p
-          className={cn(
-            'mt-2 text-sm',
-            !initialData.description && 'text-slate-500 italic',
-          )}
-        >
-          {initialData.description || 'No description'}
-        </p>
-      ) : (
+      {isCreating && (
         <form
           onSubmit={form.handleSubmit(onSubmitForm)}
           className='mt-4 space-y-4'
@@ -91,30 +82,43 @@ export function DescriptionForm({
           <FieldGroup>
             <Controller
               control={form.control}
-              name='description'
+              name='title'
               render={({ field }) => (
                 <Field>
-                  <Textarea
+                  <Input
                     disabled={isSubmitting}
-                    placeholder="e.g. 'Advanced web development'"
+                    placeholder="e.g. 'Introduction to the course'"
                     {...field}
                     className='bg-zinc-50 p-x-4'
                   />
-                  {errors.description && (
-                    <FieldError
-                      errors={[{ message: errors.description.message }]}
-                    />
+                  {errors.title && (
+                    <FieldError errors={[{ message: errors.title.message }]} />
                   )}
                 </Field>
               )}
             />
           </FieldGroup>
-          <div className='flex items-center gap-x-2'>
-            <Button disabled={!isValid || isSubmitting} type='submit'>
-              Save
-            </Button>
-          </div>
+
+          <Button disabled={!isValid || isSubmitting} type='submit'>
+            Create
+          </Button>
         </form>
+      )}
+      {!isCreating && (
+        <div
+          className={cn(
+            'text-sm mt-2',
+            !initialData.chapters.length && 'text-slate-500 italic',
+          )}
+        >
+          {!initialData.chapters.length && 'No chapters'}
+          {/* TODO: Add chapters a list of chapters*/}
+        </div>
+      )}
+      {!isCreating && (
+        <p className='mt-4 text-xs text-muted-foreground'>
+          Drag and drop to reorder the chapters
+        </p>
       )}
     </div>
   )

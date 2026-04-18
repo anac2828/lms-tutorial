@@ -35,14 +35,18 @@ export function TitleForm({ initialData, courseId }: TitleFormProps) {
   // HANDLERS
   const onToggleEdit = () => setIsEditing((isEditing) => !isEditing)
   const onSubmitForm = async (formData: z.infer<typeof formSchema>) => {
-    const response = await updateCourse(formData, courseId)
+    try {
+      const response = await updateCourse(formData, courseId)
 
-    if (response?.success) {
-      toast.success('Course title updated.')
-      onToggleEdit()
-    }
-    if (response?.error) {
-      toast.error('Something went wrong, please try again.')
+      if (response?.success) {
+        toast.success('Course title updated.')
+        onToggleEdit()
+      } else {
+        toast.error(response?.error || 'Something went wrong.')
+      }
+    } catch (error) {
+      console.error('UPDATE FORM SUBMIT ERROR', error)
+      toast.error('Something went wrong. Please try again.')
     }
   }
 

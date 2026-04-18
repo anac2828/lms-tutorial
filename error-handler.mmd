@@ -1,0 +1,24 @@
+flowchart TD
+    Start[Server Action Started] --> TryBlock[Enter try block]
+
+    TryBlock --> CheckAuth[Check user authentication\ngetUserId()]
+
+    CheckAuth -->|Throws| CatchBlock[Go to catch block]
+
+    CheckAuth -->|Success| MainLogic[Execute main logic\ncreate / update / delete]
+
+    MainLogic -->|Success| SuccessReturn[Return { success: true, data }]
+    MainLogic -->|Fails| CatchBlock
+
+    CatchBlock --> HandleError[handleActionError(error)]
+
+    HandleError --> IsKnown{Is this a known error?}
+
+    IsKnown -->|Yes| SpecificMessage[Return specific friendly message]
+    IsKnown -->|No| GenericMessage[Return generic error message]
+
+    SpecificMessage & GenericMessage --> LogError[console.error]
+    LogError --> ReturnError[Return { success: false, error: 'message' }]
+
+    SuccessReturn --> End[Action completes]
+    ReturnError --> End

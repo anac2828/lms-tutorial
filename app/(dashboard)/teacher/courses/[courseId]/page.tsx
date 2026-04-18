@@ -13,12 +13,15 @@ import { ImageForm } from './components/ImageForm'
 import { CategoryForm } from './components/CategoryForm'
 import { PriceForm } from './components/PriceForm'
 import { AttachmentForm } from './components/AttachmentForm'
+import { ChaptersForm } from './components/ChaptersForm'
+import { auth } from '@clerk/nextjs/server'
 
 async function coursePage({ params }: { params: { courseId: string } }) {
   // 1. Get course id from params
   const { courseId } = await params
+  const { userId } = await auth()
 
-  if (!courseId) {
+  if (!courseId || !userId) {
     return redirect('/')
   }
 
@@ -26,8 +29,12 @@ async function coursePage({ params }: { params: { courseId: string } }) {
   const course = await prisma.course.findUnique({
     where: {
       id: courseId,
+      userId,
     },
     include: {
+      chapters: {
+        orderBy: { position: 'asc' },
+      },
       attachments: {
         orderBy: { createdAt: 'desc' },
       },
@@ -45,6 +52,7 @@ async function coursePage({ params }: { params: { courseId: string } }) {
     course.imageUrl,
     course.price,
     course.categoryId,
+    course.chapters.some((chapter) => chapter.isPublished), //chapter has been published
   ]
 
   const totalNumFields = requiredFields.length
@@ -95,7 +103,7 @@ async function coursePage({ params }: { params: { courseId: string } }) {
               <IconBadge icon={ListChecks} />
               <h2 className='text-xl'>Course chapters</h2>
             </div>
-            <div>TODO: Chapter</div>
+            <ChaptersForm initialData={course} courseId={course.id} />
           </div>
           {/* PRICE */}
           <div>

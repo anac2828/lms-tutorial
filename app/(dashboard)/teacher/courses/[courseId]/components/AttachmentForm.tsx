@@ -1,12 +1,12 @@
 'use client'
 import * as z from 'zod'
 
-import { File, Pencil } from 'lucide-react'
+import { File, Loader2, Pencil, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useState } from 'react'
 
 import { Attachment, Course } from '@/lib/generated/prisma/client'
-import { createAttachment } from '@/lib/actions/attachment'
+import { createAttachment, deleteAttachment } from '@/lib/actions/attachment'
 
 import { Button } from '@/components/ui/button'
 import { FileUpload } from '@/components/file-upload'
@@ -23,21 +23,50 @@ const formSchema = z.object({
 
 // * COMPONENT FOR COURSE TITLE FORM
 export function AttachmentForm({ initialData, courseId }: AttachmentFormProps) {
+  console.log(
+    initialData.attachments[0].name,
+    decodeURIComponent(initialData.attachments[0].name),
+  )
+
   // EDIT MODE
   const [isEditing, setIsEditing] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   // FORM
 
   // HANDLERS
+  // Edit state
   const onToggleEdit = () => setIsEditing((isEditing) => !isEditing)
+  // Submit form
   const onSubmit = async (formData: z.infer<typeof formSchema>) => {
-    const response = await createAttachment(formData, courseId)
+    if (!formData) return
+    try {
+      const response = await createAttachment(formData, courseId)
 
-    if (response?.success) {
-      toast.success('Course image updated.')
-      onToggleEdit()
+      if (response?.success) {
+        toast.success('Course image updated.')
+        onToggleEdit()
+      } else {
+        toast.error(
+          response?.error || 'Something went wrong, please try again.',
+        )
+      }
+    } catch (error) {
+      // Other error from the try block
+      console.error('UPDATE FORM SUBMIT ERROR', error)
+      toast.error('Something went wrong. Please try again.')
     }
-    if (response?.error) {
-      toast.error('Something went wrong, please try again.')
+  }
+  // Delete attachment
+  const onDelete = async (id: string) => {
+    try {
+      setDeletingId(id)
+      await deleteAttachment(courseId, id)
+      toast.success('Attachment deleted')
+    } catch (error) {
+      console.error('DELETE ATTACHMENT ERRO', error)
+      toast.error('Something went wrong')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -64,20 +93,38 @@ export function AttachmentForm({ initialData, courseId }: AttachmentFormProps) {
           {initialData.attachments.length === 0 ? (
             <p className='mt-2 text-sm italic text-slate-500'>No attachments</p>
           ) : (
+            // List of attachments
             <div className='space-y-2'>
               {initialData.attachments.map((attachment) => (
                 <div
                   key={attachment.id}
-                  className='flex items-center w-full p-3 border rounded-md bg-sky-100 border-sky-200 text-sky-700'
+                  className='flex items-center w-full p-3 border rounded-md bg-sky-100 border-sky-200 text-sky-700 gap-0.5'
                 >
+                  {/* File icon*/}
                   <File className='w-4 h-4 mr-2 shrink-0' />
+                  {/* File name */}
                   <p className='text-xs line-clamp-1'>{attachment.name}</p>
+                  {/* Delete attachement */}
+                  {deletingId !== attachment.id && (
+                    <button
+                      className='ml-auto transition hover:opacity-75'
+                      onClick={() => onDelete(attachment.id)}
+                    >
+                      <X className='w-4 h-4' />
+                    </button>
+                  )}
+                  {deletingId === attachment.id && (
+                    <div>
+                      <Loader2 className='w-4 h-4 animate-spin' />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           )}
         </>
       ) : (
+        // Upload window
         <div>
           {/* Custom component that returns the uploadzode component */}
           <FileUpload
