@@ -11,8 +11,11 @@ import { Course, Chapter } from '@/lib/generated/prisma/client'
 
 import { Field, FieldError, FieldGroup } from '@/components/ui/field'
 import { Button } from '@/components/ui/button'
-import { updateCourse } from '@/lib/actions/course'
+
 import { Input } from '@/components/ui/input'
+import { ChaptersList } from './ChaptersList'
+import { createChapter, updateChapterOrder } from '@/lib/actions/chapter'
+import { useRouter } from 'next/navigation'
 
 interface ChaptersFormProps {
   initialData: Course & { chapters: Chapter[] }
@@ -26,8 +29,9 @@ const formSchema = z.object({
 
 // * COMPONENT FOR COURSE TITLE FORM
 export function ChaptersForm({ initialData, courseId }: ChaptersFormProps) {
+  const router = useRouter()
   const [isCreating, setIsCreating] = useState(false)
-  const [isUpdating, setIsUpdating] = useState(false)
+  // const [isUpdating, setIsUpdating] = useState(false)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -40,7 +44,7 @@ export function ChaptersForm({ initialData, courseId }: ChaptersFormProps) {
   const toggleCreating = () => setIsCreating((isCreating) => !isCreating)
   const onSubmitForm = async (formData: z.infer<typeof formSchema>) => {
     try {
-      const response = await updateCourse(formData, courseId)
+      const response = await createChapter(formData, courseId)
 
       if (response?.success) {
         toast.success('Chapter created')
@@ -57,6 +61,30 @@ export function ChaptersForm({ initialData, courseId }: ChaptersFormProps) {
     }
   }
 
+  const onReorder = async (updateData: { id: string; position: number }[]) => {
+    try {
+      const response = await updateChapterOrder(updateData, courseId)
+
+      // if (response?.success) {
+      //   toast.success('Chapters reordered')
+      // } else {
+      //   toast.error(
+      //     response?.error || 'Something went wrong, please try again.',
+      //   )
+      // }
+      toast.error(response?.error || 'Something went wrong, please try again.')
+    } catch (error) {
+      // Other error from the try block
+      console.error('ONREORDER CHAPTER ERROR', error)
+      toast.error('Something went wrong. Please try again.')
+    }
+  }
+
+  const onEdit = (id: string) => {
+    // Show chapter edit form
+    router.push(`/teacher/courses/${courseId}/chapters/${id}`)
+  }
+
   // FORM STATE
   const { isValid, errors, isSubmitting } = form.formState
 
@@ -64,6 +92,7 @@ export function ChaptersForm({ initialData, courseId }: ChaptersFormProps) {
     <div className='p-4 mt-6 border rounded-md bg-slate-100'>
       <div className='flex items-center justify-between font-medium'>
         Course chapters
+        {/* ADD CHAPTER */}
         <Button onClick={toggleCreating} variant='ghost'>
           {isCreating ? (
             'Cancel'
@@ -74,6 +103,7 @@ export function ChaptersForm({ initialData, courseId }: ChaptersFormProps) {
           )}
         </Button>
       </div>
+      {/* FORM */}
       {isCreating && (
         <form
           onSubmit={form.handleSubmit(onSubmitForm)}
@@ -86,6 +116,7 @@ export function ChaptersForm({ initialData, courseId }: ChaptersFormProps) {
               render={({ field }) => (
                 <Field>
                   <Input
+                    defaultValue={undefined}
                     disabled={isSubmitting}
                     placeholder="e.g. 'Introduction to the course'"
                     {...field}
@@ -104,6 +135,7 @@ export function ChaptersForm({ initialData, courseId }: ChaptersFormProps) {
           </Button>
         </form>
       )}
+      {/* LIST OF CHAPTERS */}
       {!isCreating && (
         <div
           className={cn(
@@ -112,7 +144,12 @@ export function ChaptersForm({ initialData, courseId }: ChaptersFormProps) {
           )}
         >
           {!initialData.chapters.length && 'No chapters'}
-          {/* TODO: Add chapters a list of chapters*/}
+          <ChaptersList
+            onEdit={onEdit}
+            onReorder={onReorder}
+            items={initialData.chapters || []}
+            courseId={courseId}
+          />
         </div>
       )}
       {!isCreating && (

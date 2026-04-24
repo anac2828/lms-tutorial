@@ -23,11 +23,6 @@ const formSchema = z.object({
 
 // * COMPONENT FOR COURSE TITLE FORM
 export function AttachmentForm({ initialData, courseId }: AttachmentFormProps) {
-  console.log(
-    initialData.attachments[0].name,
-    decodeURIComponent(initialData.attachments[0].name),
-  )
-
   // EDIT MODE
   const [isEditing, setIsEditing] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
