@@ -14,10 +14,12 @@ import { updateChapter } from '@/lib/actions/chapter'
 import EditorSlate from '@/components/editor'
 
 // Slate imports — make sure these are installed:
-import { Descendant, createEditor, Node } from 'slate'
+import { Descendant, createEditor, Node, Editor } from 'slate'
 import { withReact } from 'slate-react'
 import { withHistory } from 'slate-history'
 import { EditorPreview } from '@/components/EditorPreview'
+import { cn } from '@/lib/utils'
+import { CustomElement } from '@/lib/custom-types'
 
 interface ChapterDescriptionFormProps {
   initialData: Chapter
@@ -89,8 +91,11 @@ export function ChapterDescriptionForm({
     deserialize(initialData?.description),
   )
 
-  const convertToPlainText = (nodes: Descendant[]) =>
-    nodes.map((n) => Node.string(n)).join('\n')
+  // Check if no description
+  const isEmpty =
+    slateValue.length === 0 ||
+    (slateValue.length === 1 &&
+      Editor.isEmpty(editor, slateValue[0] as CustomElement))
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -152,16 +157,10 @@ export function ChapterDescriptionForm({
       </div>
 
       {/* ── Display mode ───────────────────────────────────────────────── */}
-      {!isEditing && (
-        // <p
-        //   className={cn(
-        //     'text-sm mt-2',
-        //     !initialData.description && 'text-slate-500 italic',
-        //   )}
-        // >
-        //   {convertToPlainText(slateValue) || 'No description'}
-        // </p>
-        <EditorPreview value={slateValue} className='p-3 border rounded-md' />
+      {!isEditing && isEmpty ? (
+        <p className='mt-2 text-sm italic text-slate-500'>No description</p>
+      ) : (
+        <EditorPreview value={slateValue} />
       )}
 
       {/* ── Edit mode ──────────────────────────────────────────────────── */}

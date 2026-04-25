@@ -65,6 +65,8 @@ export async function createChapter(
 const formSchema = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
+  isFree: z.boolean().optional(),
+  videoUrl: z.string().optional(),
 })
 // *** UPDATE CHAPTER ***
 export async function updateChapter(

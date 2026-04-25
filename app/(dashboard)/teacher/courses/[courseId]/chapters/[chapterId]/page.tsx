@@ -1,4 +1,4 @@
-import { ArrowLeft, LayoutDashboard } from 'lucide-react'
+import { ArrowLeft, Eye, LayoutDashboard, Video } from 'lucide-react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
@@ -6,6 +6,8 @@ import { prisma } from '@/lib/db'
 import { IconBadge } from '@/components/icon-badge'
 import { ChaperTitleForm } from './components/ChapterTitleForm'
 import { ChapterDescriptionForm } from './components/ChapterDescriptionForm'
+import { ChaperAccessForm } from './components/ChapterAccessForm'
+import { ChapterVideoForm } from './components/ChapterVideoForm'
 
 async function ChapterIdPage({
   params,
@@ -56,6 +58,7 @@ async function ChapterIdPage({
       </div>
       {/* CHAPTER DETAILS */}
       <div className='grid grid-cols-1 gap-6 mt-16 md:grid-cols-2'>
+        {/* Customize your chapter */}
         <div className='space-y-4'>
           <div>
             <div className='flex items-center gap-x-2'>
@@ -68,6 +71,34 @@ async function ChapterIdPage({
               chapterId={chapterId}
             />
             <ChapterDescriptionForm
+              initialData={chapter}
+              courseId={courseId}
+              chapterId={chapterId}
+            />
+          </div>
+        </div>
+        {/* Access settings*/}
+        <div className='space-y-4'>
+          <div>
+            <div className='flex items-center gap-x-2'>
+              <IconBadge icon={Eye} />
+              <h2 className='text-xl'>Access Settings</h2>
+            </div>
+            <ChaperAccessForm
+              initialData={chapter}
+              courseId={courseId}
+              chapterId={chapterId}
+            />
+          </div>
+        </div>
+        {/* VIDEO UPLOAD */}
+        <div className='space-y-4'>
+          <div>
+            <div className='flex items-center gap-x-2'>
+              <IconBadge icon={Video} />
+              <h2 className='text-xl'>Add a video</h2>
+            </div>
+            <ChapterVideoForm
               initialData={chapter}
               courseId={courseId}
               chapterId={chapterId}

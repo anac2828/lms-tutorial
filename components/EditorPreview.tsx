@@ -90,7 +90,7 @@ function SlateNode({
       return <li style={style}>{children}</li>
     default:
       return (
-        <p style={style} className='text-sm leading-relaxed'>
+        <p style={style} className='text-base leading-relaxed'>
           {children}
         </p>
       )
