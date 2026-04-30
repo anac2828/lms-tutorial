@@ -2,7 +2,11 @@
 
 import { ConfirmModal } from '@/components/confirm-modal'
 import { Button } from '@/components/ui/button'
-import { deleteChapter, updateChapter } from '@/lib/actions/chapter'
+import {
+  deleteChapter,
+  publishChapter,
+  unpublishChapter,
+} from '@/lib/actions/chapter'
 import { Trash } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -27,15 +31,21 @@ export function ChapterActions({
   const onPublish = async () => {
     try {
       setIsLoading(true)
-      const response = await updateChapter(
-        { isPublished: !isPublished },
-        courseId,
-        chapterId,
-      )
 
-      if (response?.success) {
-        // isPublished default is false when chapter is submitted it will be true
-        toast.success(`Chapter ${isPublished ? 'unpublished' : 'published'}`)
+      // Publish chapter
+      if (!isPublished) {
+        console.log('isPublished', isPublished)
+        const response = await publishChapter(courseId, chapterId)
+
+        if (response?.success) toast.success(`Chapter published`)
+      }
+
+      // Unpublish chapter
+      if (isPublished) {
+        console.log('not isPublished', isPublished)
+        const response = await unpublishChapter(courseId, chapterId)
+
+        if (response?.success) toast.success(`Chapter unpublished`)
       }
     } catch (error) {
       console.error('ON_PUBLISH_CHAPTER', error)
@@ -69,7 +79,7 @@ export function ChapterActions({
       <Button
         onClick={onPublish}
         disabled={!disabled || isLoading}
-        variant='outline'
+        variant={isPublished ? 'destructive' : 'success'}
         size='sm'
       >
         {isPublished ? 'Unpublished' : 'Publish'}

@@ -93,22 +93,6 @@ export async function updateChapter(
     // ERROR HANDLER
     if (!courseOwner) throw new Error('UNAUTHORIZED')
 
-    const chapter = await prisma.chapter.findUnique({
-      where: { id: chapterId, courseId },
-    })
-
-    const muxData = await prisma.muxData.findUnique({ where: { chapterId } })
-
-    if (
-      !chapter ||
-      !muxData ||
-      !chapter.title ||
-      !chapter.description ||
-      !chapter.videoUrl
-    ) {
-      throw new Error('Missing required fields.')
-    }
-
     // 3 Update chapter
     await prisma.chapter.update({
       where: { id: chapterId, courseId },
@@ -146,7 +130,7 @@ export async function updateChapter(
     }
 
     revalidatePath(`/teacher/courses/${courseId}/chapters/${chapterId}`)
-    return { success: true, chapter }
+    return { success: true }
   } catch (error) {
     console.error('UPDATE_CHAPTER_ACTION', error)
     return handleActionError(error, 'Failed to updated course.')
@@ -253,10 +237,13 @@ export async function updateChapterOrder(
   }
 }
 
-// ** DELETE ATTACHMENT ****
-
-export async function deleteAttachment(courseId: string, id: string) {
+// ** PUBLISH CHAPTER ** //
+export async function publishChapter(
+  courseId: string,
+  chapterId: string,
+): Promise<ActionState> {
   try {
+    console.log('PUBLISHED')
     // 1 Check if user is signed in
     const userId = await getUserId()
 
@@ -265,15 +252,81 @@ export async function deleteAttachment(courseId: string, id: string) {
       where: { id: courseId, userId },
     })
 
+    // ERROR HANDLER
     if (!courseOwner) throw new Error('UNAUTHORIZED')
 
-    // 3 Delete attachment
-    await prisma.attachment.delete({ where: { courseId, id } })
+    const chapter = await prisma.chapter.findUnique({
+      where: { id: chapterId, courseId },
+    })
 
-    revalidatePath(`/teacher/courses/${courseId}`)
+    const muxData = await prisma.muxData.findUnique({ where: { chapterId } })
+
+    if (
+      !chapter ||
+      !muxData ||
+      !chapter.title ||
+      !chapter.description ||
+      !chapter.videoUrl
+    ) {
+      throw new Error('Missing required fields.')
+    }
+
+    await prisma.chapter.update({
+      where: { id: chapterId, courseId },
+      data: { isPublished: true },
+    })
+
+    revalidatePath(`/teacher/courses/${courseId}/chapters/${chapterId}`)
     return { success: true }
-  } catch (error: unknown) {
-    console.log('ATTACHMENT_ID', error)
-    return handleActionError(error, 'Failed to updated course.')
+  } catch (error) {
+    console.log('PUBLISH_CHAPTER', error)
+    return handleActionError(error, 'Failed to publish chapter.')
+  }
+}
+
+// ** UNPUBLISH CHAPTER ** //
+export async function unpublishChapter(
+  courseId: string,
+  chapterId: string,
+): Promise<ActionState> {
+  try {
+    console.log('UNPUBLISHED')
+    // 1 Check if user is signed in
+    const userId = await getUserId()
+
+    // 2 Check if user is owner of course
+    const courseOwner = await prisma.course.findUnique({
+      where: { id: courseId, userId },
+    })
+
+    // ERROR HANDLER
+    if (!courseOwner) throw new Error('UNAUTHORIZED')
+
+    // Unpublish chapter
+    const chapter = await prisma.chapter.update({
+      where: { id: chapterId, courseId },
+      data: { isPublished: false },
+    })
+
+    // Find any published chapters in the course
+    const publishedChaptersInCourse = await prisma.chapter.findMany({
+      where: { courseId, isPublished: true },
+    })
+
+    // Unpublish course if it has no published chapters
+    if (!publishedChaptersInCourse.length) {
+      await prisma.course.update({
+        where: {
+          id: courseId,
+        },
+        data: { isPublished: false },
+      })
+    }
+    console.log(chapter)
+    revalidatePath(`/teacher/courses/${courseId}/chapters/${chapterId}`)
+    return { success: true }
+  } catch (error) {
+    console.log('PUBLISH_CHAPTER', error)
+    return handleActionError(error, 'Failed to publish chapter.')
   }
 }
