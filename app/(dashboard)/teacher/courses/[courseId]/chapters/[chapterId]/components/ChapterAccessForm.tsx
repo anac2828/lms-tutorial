@@ -107,6 +107,7 @@ export function ChaperAccessForm({
                   <Checkbox
                     checked={field.value}
                     onCheckedChange={field.onChange}
+                    className='bg-zinc-50'
                   />
                   {errors.isFree && (
                     <FieldError errors={[{ message: errors.isFree.message }]} />

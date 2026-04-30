@@ -119,6 +119,8 @@ export function ChapterDescriptionForm({
 
   const onSubmitForm = async (formData: z.infer<typeof formSchema>) => {
     try {
+      if (isEmpty) formData.description = ''
+
       const response = await updateChapter(formData, courseId, chapterId)
       if (response?.success) {
         toast.success('Chapter description updated.')
@@ -157,11 +159,11 @@ export function ChapterDescriptionForm({
       </div>
 
       {/* ── Display mode ───────────────────────────────────────────────── */}
-      {!isEditing && isEmpty ? (
+      {!isEditing && isEmpty && (
         <p className='mt-2 text-sm italic text-slate-500'>No description</p>
-      ) : (
-        <EditorPreview value={slateValue} />
       )}
+
+      {!isEditing && !isEmpty && <EditorPreview value={slateValue} />}
 
       {/* ── Edit mode ──────────────────────────────────────────────────── */}
       {isEditing && (

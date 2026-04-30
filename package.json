@@ -21,6 +21,8 @@
     "@hookform/resolvers": "^5.2.2",
     "@mui/icons-material": "^9.0.0",
     "@mui/material": "^9.0.0",
+    "@mux/mux-node": "^14.0.1",
+    "@mux/mux-player-react": "^3.12.0",
     "@prisma/adapter-neon": "^7.6.0",
     "@prisma/client": "^7.6.0",
     "@uploadthing/react": "^7.3.3",
