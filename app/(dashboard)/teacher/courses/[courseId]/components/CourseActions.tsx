@@ -2,30 +2,31 @@
 
 import { ConfirmModal } from '@/components/confirm-modal'
 import { Button } from '@/components/ui/button'
+import { useConfettiStore } from '@/hooks/use-confetti-store'
+
 import {
-  deleteChapter,
-  publishChapter,
-  unpublishChapter,
-} from '@/lib/actions/chapter'
+  deleteCourse,
+  publishCourse,
+  unpublishCourse,
+} from '@/lib/actions/course'
 import { Trash } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
-interface ChapterActionsProps {
+interface CourseActionsProps {
   disabled: boolean
   courseId: string
-  chapterId: string
   isPublished: boolean
 }
 
-export function ChapterActions({
+export function CourseActions({
   disabled,
   courseId,
-  chapterId,
   isPublished,
-}: ChapterActionsProps) {
+}: CourseActionsProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const confetti = useConfettiStore()
   const router = useRouter()
 
   const onPublish = async () => {
@@ -34,16 +35,19 @@ export function ChapterActions({
 
       // Publish chapter
       if (!isPublished) {
-        const response = await publishChapter(courseId, chapterId)
+        const response = await publishCourse(courseId)
 
-        if (response?.success) toast.success(`Chapter published`)
+        if (response?.success) {
+          toast.success(`Course published`)
+          confetti.onOpen()
+        }
       }
 
       // Unpublish chapter
       if (isPublished) {
-        const response = await unpublishChapter(courseId, chapterId)
+        const response = await unpublishCourse(courseId)
 
-        if (response?.success) toast.success(`Chapter unpublished`)
+        if (response?.success) toast.success(`Course unpublished`)
       }
     } catch (error) {
       console.error('ON_PUBLISH_CHAPTER', error)
@@ -57,14 +61,15 @@ export function ChapterActions({
     try {
       setIsLoading(true)
 
-      const response = await deleteChapter(courseId, chapterId)
+      const response = await deleteCourse(courseId)
 
       if (response?.success) {
-        toast.success('Chapter deleted')
+        toast.success('Course deleted')
       }
 
+      router.push(`/teacher/courses`)
+
       // Redirect user
-      router.push(`/teacher/courses/${courseId}`)
     } catch (error) {
       console.error('ONDELETE ERROR', error)
       toast.error('Something went wrong')
@@ -84,7 +89,7 @@ export function ChapterActions({
       </Button>
       <ConfirmModal
         onConfirm={onDelete}
-        message='Are you sure you want to delete this capter?'
+        message='Are you sure you want to delete this course?'
       >
         <Button size='sm' disabled={isLoading}>
           <Trash className='w-4 h-4' />

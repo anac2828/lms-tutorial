@@ -243,7 +243,6 @@ export async function publishChapter(
   chapterId: string,
 ): Promise<ActionState> {
   try {
-    console.log('PUBLISHED')
     // 1 Check if user is signed in
     const userId = await getUserId()
 
@@ -290,7 +289,6 @@ export async function unpublishChapter(
   chapterId: string,
 ): Promise<ActionState> {
   try {
-    console.log('UNPUBLISHED')
     // 1 Check if user is signed in
     const userId = await getUserId()
 
@@ -303,7 +301,7 @@ export async function unpublishChapter(
     if (!courseOwner) throw new Error('UNAUTHORIZED')
 
     // Unpublish chapter
-    const chapter = await prisma.chapter.update({
+    await prisma.chapter.update({
       where: { id: chapterId, courseId },
       data: { isPublished: false },
     })
@@ -322,7 +320,7 @@ export async function unpublishChapter(
         data: { isPublished: false },
       })
     }
-    console.log(chapter)
+
     revalidatePath(`/teacher/courses/${courseId}/chapters/${chapterId}`)
     return { success: true }
   } catch (error) {

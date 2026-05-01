@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Geist } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
+import { ConfettiProvider } from '@/components/providers/confetti-provider'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -23,6 +24,7 @@ export default function RootLayout({
     <html lang='en'>
       <body className={geistSans.className}>
         <ClerkProvider>{children}</ClerkProvider>
+        <ConfettiProvider />
         <Toaster position='top-center' />
       </body>
     </html>

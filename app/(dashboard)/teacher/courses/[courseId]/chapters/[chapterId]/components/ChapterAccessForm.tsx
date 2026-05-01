@@ -47,7 +47,6 @@ export function ChaperAccessForm({
   const onToggleEdit = () => setIsEditing((isEditing) => !isEditing)
   const onSubmitForm = async (formData: z.infer<typeof formSchema>) => {
     try {
-      console.log(formData)
       const response = await updateChapter(formData, courseId, chapterId)
 
       if (response?.success) {
