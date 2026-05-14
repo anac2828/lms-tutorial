@@ -1,11 +1,14 @@
 'use server'
 import * as z from 'zod'
-import { prisma } from '../db'
-
+import Mux from '@mux/mux-node'
 import { revalidatePath } from 'next/cache'
+
+import { prisma } from '../db'
 import { getUserId } from '../auth'
 import { handleActionError } from '../errorHandler'
-import Mux from '@mux/mux-node'
+import { Category, Course } from '../generated/prisma/client'
+import { getProgress } from './get-progress'
+import { convertServerPatchToFullTree } from 'next/dist/client/components/segment-cache/navigation'
 
 const mux = new Mux({
   tokenId: process.env.MUX_TOKEN,
@@ -22,6 +25,61 @@ type ActionState = {
   error?: string
   courseId?: string
 } | null
+
+type CourseWithProgressWithCategory = Course & {
+  category: Category | null
+  chapters: { id: string }[]
+  progress: number | null
+}
+
+type GetCourses = {
+  userId: string
+  title?: string
+  categoryId?: string
+}
+
+// ******* ACTION FUNCTION TO GET COURSES *******
+export async function getCoursesWithProgress({
+  userId,
+  title,
+  categoryId,
+}: GetCourses): Promise<CourseWithProgressWithCategory[]> {
+  console.log('TILE', title)
+  try {
+    // Find courses with filters for title and category, only return published courses for userId matching
+    const courses = await prisma.course.findMany({
+      where: {
+        isPublished: true,
+        title: { contains: title, mode: 'insensitive' },
+      },
+      include: {
+        category: true,
+        chapters: { where: { isPublished: true }, select: { id: true } },
+        purchases: { where: { userId } },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+    console.log('COURSES', courses)
+
+    const courseswithProgress: CourseWithProgressWithCategory[] =
+      await Promise.all(
+        courses.map(async (course) => {
+          // return course with progress null if user has not purchased course
+          if (course.purchases.length === 0) {
+            return { ...course, progress: null }
+          }
+          const progressPercentage = await getProgress(userId, course.id)
+          // return course with progress percentage if user has purchased course
+          return { ...course, progress: progressPercentage }
+        }),
+      )
+
+    return courseswithProgress
+  } catch (error) {
+    console.error('GET_COURSES', error)
+    return []
+  }
+}
 
 // ******* ACTION FUNCTION TO CREATE A COURSE *******
 export async function createCourse(

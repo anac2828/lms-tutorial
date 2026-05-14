@@ -4,8 +4,9 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../lib/generated/prisma"
+  provider        = "prisma-client"
+  output          = "../lib/generated/prisma"
+  previewFeatures = ["fullTextSearchPostgres"]
 }
 
 datasource db {
@@ -30,6 +31,8 @@ model Course {
   attachments Attachment[]
   chapters    Chapter[]
   purchases   Purchase[]
+
+  @@index([categoryId])
 }
 
 model Category {
@@ -109,6 +112,7 @@ model Purchase {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt()
 
+  @@unique([userId, courseId])
   @@index([courseId])
 }
 
