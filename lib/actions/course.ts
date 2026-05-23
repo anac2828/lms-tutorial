@@ -44,7 +44,6 @@ export async function getCoursesWithProgress({
   title,
   categoryId,
 }: GetCourses): Promise<CourseWithProgressWithCategory[]> {
-  console.log('TILE', title)
   try {
     // Find courses with filters for title and category, only return published courses for userId matching
     const courses = await prisma.course.findMany({
@@ -59,7 +58,6 @@ export async function getCoursesWithProgress({
       },
       orderBy: { createdAt: 'desc' },
     })
-    console.log('COURSES', courses)
 
     const courseswithProgress: CourseWithProgressWithCategory[] =
       await Promise.all(

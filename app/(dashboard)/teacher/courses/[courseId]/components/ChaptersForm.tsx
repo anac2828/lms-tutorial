@@ -45,6 +45,7 @@ export function ChaptersForm({ initialData, courseId }: ChaptersFormProps) {
   const onSubmitForm = async (formData: z.infer<typeof formSchema>) => {
     try {
       const response = await createChapter(formData, courseId)
+      form.reset()
 
       if (response?.success) {
         toast.success('Chapter created')
@@ -105,35 +106,49 @@ export function ChaptersForm({ initialData, courseId }: ChaptersFormProps) {
       </div>
       {/* FORM */}
       {isCreating && (
-        <form
-          onSubmit={form.handleSubmit(onSubmitForm)}
-          className='mt-4 space-y-4'
-        >
-          <FieldGroup>
-            <Controller
-              control={form.control}
-              name='title'
-              render={({ field }) => (
-                <Field>
-                  <Input
-                    defaultValue={undefined}
-                    disabled={isSubmitting}
-                    placeholder="e.g. 'Introduction to the course'"
-                    {...field}
-                    className='bg-zinc-50 p-x-4'
-                  />
-                  {errors.title && (
-                    <FieldError errors={[{ message: errors.title.message }]} />
-                  )}
-                </Field>
-              )}
-            />
-          </FieldGroup>
+        <>
+          <form
+            onSubmit={form.handleSubmit(onSubmitForm)}
+            className='mt-4 space-y-4'
+          >
+            <FieldGroup>
+              <Controller
+                control={form.control}
+                name='title'
+                render={({ field }) => (
+                  <Field>
+                    <Input
+                      defaultValue={undefined}
+                      disabled={isSubmitting}
+                      placeholder="e.g. 'Introduction to the course'"
+                      {...field}
+                      className='bg-zinc-50 p-x-4'
+                    />
+                    {errors.title && (
+                      <FieldError
+                        errors={[{ message: errors.title.message }]}
+                      />
+                    )}
+                  </Field>
+                )}
+              />
+            </FieldGroup>
 
-          <Button disabled={!isValid || isSubmitting} type='submit'>
-            Create
-          </Button>
-        </form>
+            <Button disabled={!isValid || isSubmitting} type='submit'>
+              Create
+            </Button>
+          </form>
+
+          {/* {!initialData.chapters.length && 'No chapters'} */}
+          <div className='pt-4'>
+            <ChaptersList
+              onEdit={onEdit}
+              onReorder={onReorder}
+              items={initialData.chapters || []}
+              courseId={courseId}
+            />
+          </div>
+        </>
       )}
       {/* LIST OF CHAPTERS */}
       {!isCreating && (

@@ -6,13 +6,14 @@ import Mux from '@mux/mux-node'
 import { prisma } from '../db'
 import { getUserId } from '../auth'
 import { handleActionError } from '../errorHandler'
+import { Attachment, Chapter } from '../generated/prisma/client'
 
 const mux = new Mux({
   tokenId: process.env.MUX_TOKEN,
   tokenSecret: process.env.MUX_SECRET_KEY,
 })
 
-// State
+// State Type
 type ActionState = {
   success?: boolean
   error?: string
@@ -24,6 +25,83 @@ type ActionState = {
 // Data schema
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const createChapterFormSchema = z.object({ title: z.string() })
+
+// ************ ACTIONS ****************
+
+//**  GET CHAPTER ****
+
+interface GetChapterProps {
+  userId: string
+  courseId: string
+  chapterId: string
+}
+
+export async function getChapter({
+  userId,
+  courseId,
+  chapterId,
+}: GetChapterProps) {
+  try {
+    const purchase = await prisma.purchase.findUnique({
+      where: { userId_courseId: { userId, courseId } },
+    })
+
+    const course = await prisma.course.findUnique({
+      where: { isPublished: true, id: courseId },
+      select: { price: true },
+    })
+
+    const chapter = await prisma.chapter.findUnique({
+      where: { id: chapterId, isPublished: true },
+      include: { muxData: true },
+    })
+
+    if (!chapter || !course) throw new Error('NOT FOUND')
+
+    let muxData = null
+    let attachments: Attachment[] = []
+    let nextChapter: Chapter | null = null
+
+    // Get attachments if chapter is free or user has purchased the course
+    if (purchase) {
+      attachments = await prisma.attachment.findMany({
+        where: { courseId },
+      })
+    }
+
+    if (chapter.isFree || purchase) {
+      muxData = await prisma.muxData.findUnique({
+        where: { chapterId },
+      })
+
+      // Get next chapter
+      nextChapter = await prisma.chapter.findFirst({
+        where: {
+          courseId,
+          isPublished: true,
+          position: { gt: chapter?.position },
+        },
+        orderBy: { position: 'asc' },
+      })
+    }
+
+    const userProgress = await prisma.userProgress.findUnique({
+      where: { userId_chapterId: { userId, chapterId } },
+    })
+
+    return {
+      chapter,
+      course,
+      muxData,
+      attachments,
+      nextChapter,
+      userProgress,
+      purchase,
+    }
+  } catch (error) {
+    console.error('GET_CHAPTER_ACTION', error)
+  }
+}
 
 // ** CREATE CHAPTER *****
 export async function createChapter(

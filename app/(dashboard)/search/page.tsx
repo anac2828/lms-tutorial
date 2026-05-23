@@ -22,7 +22,7 @@ async function SearchPage({ searchParams }: SearchPageProps) {
   })
   const params = await searchParams
   // Get courses with progress from database
-  console.log('SEARCH PARAMS', params)
+
   const courses = await getCoursesWithProgress({ userId, ...params })
 
   return (

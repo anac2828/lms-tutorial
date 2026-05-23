@@ -78,6 +78,12 @@ async function coursePage({ params }: { params: { courseId: string } }) {
           <div className='flex flex-col gap-y-2'>
             <h1 className='text-2xl font-medium'>Course setup</h1>
             <span>Complete all fields {completionText}</span>
+            <span className='text-sm text-muted-foreground'>
+              {!requiredFields.at(-1) &&
+              requiredFields.slice(0, -1).every(Boolean)
+                ? 'Plublish a chapter to complete course setup.'
+                : ''}
+            </span>
           </div>
           <CourseActions
             disabled={isCompleted}

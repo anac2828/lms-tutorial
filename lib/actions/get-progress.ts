@@ -10,7 +10,6 @@ export async function getProgress(
       select: { id: true },
     })
 
-    console.log(publishedChapters)
     //   Array of chapter Ids
     const publishedChapterIds = publishedChapters.map((chapter) => chapter.id)
     // Chapters completed by user

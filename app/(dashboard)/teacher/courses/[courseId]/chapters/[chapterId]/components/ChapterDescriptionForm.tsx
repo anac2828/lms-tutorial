@@ -14,11 +14,11 @@ import { updateChapter } from '@/lib/actions/chapter'
 import EditorSlate from '@/components/editor'
 
 // Slate imports — make sure these are installed:
-import { Descendant, createEditor, Node, Editor } from 'slate'
+import { Descendant, createEditor, Editor } from 'slate'
 import { withReact } from 'slate-react'
 import { withHistory } from 'slate-history'
 import { EditorPreview } from '@/components/EditorPreview'
-import { cn } from '@/lib/utils'
+
 import { CustomElement } from '@/lib/custom-types'
 
 interface ChapterDescriptionFormProps {
